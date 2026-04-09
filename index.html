@@ -166,7 +166,7 @@
     <ul>
       <li>每周中奖人数上限为 10 人</li>
       <li>每位顾客仅有一次抽奖机会</li>
-      <li>所有奖品及中奖名额每周日早 06:00 自动重置</li>
+      <li>所有奖品及中奖名额每周一早 06:00 自动重置</li>
       <li>中奖后请向摊主出示此页面兑换</li>
     </ul>
   </div>
@@ -260,16 +260,16 @@ function getUserId() {
 }
 
 // ============================================================
-// 重置周期：每周日 06:00
+// 重置周期：每周一 06:00
 // ============================================================
 function getCycleStart() {
   const now = new Date();
-  const day = now.getDay(); // 0=周日
-  const lastSunday = new Date(now);
-  lastSunday.setDate(now.getDate() - day);
-  lastSunday.setHours(6, 0, 0, 0);
-  if (now < lastSunday) lastSunday.setDate(lastSunday.getDate() - 7);
-  return lastSunday.getTime();
+  const day = now.getDay(); // 0=周日, 1=周一
+  const lastMonday = new Date(now);
+  lastMonday.setDate(now.getDate() - ((day + 6) % 7)); // day=1→0天前(day=Mon), day=0→6天前(day=Sun)
+  lastMonday.setHours(6, 0, 0, 0);
+  if (now < lastMonday) lastMonday.setDate(lastMonday.getDate() - 7);
+  return lastMonday.getTime();
 }
 
 function getNextReset() {

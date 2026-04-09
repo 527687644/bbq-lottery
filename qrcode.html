@@ -4,104 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>烧烤摊抽奖 — 二维码</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.staticfile.org/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-
-    body { background:#1a0a00; font-family:'PingFang SC','Microsoft YaHei',sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:24px; color:#fff; }
-
-    /* 引导填写配置 */
-    .setup-guide { background:rgba(255,255,255,0.05); border:1px solid rgba(255,140,0,0.4); border-radius:16px; padding:24px; max-width:360px; width:100%; text-align:center; }
-    .setup-guide h2 { color:#ff8c00; font-size:16px; margin-bottom:16px; }
-    .setup-guide ol { text-align:left; font-size:13px; color:#ccc; line-height:2; padding-left:20px; }
-    .setup-guide code { background:rgba(255,140,0,0.15); padding:2px 6px; border-radius:4px; color:#ffb347; font-size:12px; }
-
-    .divider { width:100%; max-width:340px; margin:24px auto; display:flex; align-items:center; gap:12px; }
-    .divider::before, .divider::after { content:''; flex:1; height:1px; background:rgba(255,140,0,0.2); }
-    .divider span { color:#555; font-size:12px; }
-
-    /* 二维码卡片 */
-    .card { background:linear-gradient(160deg,#2d1200,#1a0800); border:2px solid rgba(255,140,0,0.5); border-radius:24px; padding:32px 28px 24px; text-align:center; max-width:340px; width:100%; box-shadow:0 0 60px rgba(255,106,0,0.3); }
-    .flame { font-size:48px; margin-bottom:8px; animation:fp 1.5s ease-in-out infinite; }
-    @keyframes fp { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-    h1 { font-size:22px; font-weight:900; color:#fff; text-shadow:0 0 16px #ff6a00; margin-bottom:4px; letter-spacing:2px; }
-    .sub { font-size:13px; color:#ffb347; margin-bottom:20px; }
-    #qr-wrap { background:#fff; border-radius:16px; padding:14px; display:inline-block; margin-bottom:16px; }
-    .url-box { background:rgba(255,255,255,0.06); border:1px solid rgba(255,140,0,0.3); border-radius:8px; padding:8px 12px; font-size:11px; color:#ffb347; word-break:break-all; margin-bottom:16px; }
-    .prizes { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
-    .p-item { background:rgba(255,255,255,0.05); border-radius:8px; padding:8px; font-size:12px; }
-    .p-item .lv { font-weight:700; margin-bottom:2px; }
-    .p-item .nm { color:#ffcc88; }
-    .p1 .lv{color:#ffd700} .p2 .lv{color:#c0c0c0} .p3 .lv{color:#cd7f32} .p4 .lv{color:#66cc66}
-    .rule { font-size:11px; color:#888; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px; }
-    .rule span { color:#ff8c00; }
-    .print-btn { margin-top:24px; padding:10px 28px; border-radius:50px; border:none; background:linear-gradient(135deg,#ff6a00,#ee0979); color:#fff; font-size:14px; font-weight:700; cursor:pointer; }
-
-    @media print {
-      body{background:#fff} .print-btn,.setup-guide,.divider{display:none}
-      .card{border-color:#ccc;box-shadow:none;background:#fff;color:#000}
-      h1{color:#000;text-shadow:none} .sub{color:#555}
-      .url-box{color:#333;border-color:#ccc}
-      .p-item{background:#f5f5f5}
-      .p1 .lv,.p2 .lv,.p3 .lv,.p4 .lv{color:#333} .nm{color:#555!important}
-      .rule{color:#444}
-    }
-  </style>
-</head>
-<body>
-
-<div class="card">
-  <div class="flame">🔥</div>
-  <h1>烧烤摊幸运抽奖</h1>
-  <div class="sub">扫码参与 · 免费抽好礼</div>
-
-  <div id="qr-wrap"></div>
-  <div class="url-box" id="urlBox">加载中...</div>
-
-  <div class="prizes">
-    <div class="p-item p1"><div class="lv">🥇 一等奖</div><div class="nm">玉米 10 串 × 1份</div></div>
-    <div class="p-item p2"><div class="lv">🥈 二等奖</div><div class="nm">玉米 5 串 × 5份</div></div>
-    <div class="p-item p3"><div class="lv">🥉 三等奖</div><div class="nm">小肉串 2 串 × 2份</div></div>
-    <div class="p-item p4"><div class="lv">🎖️ 四等奖</div><div class="nm">韭菜/土豆 2串×2份</div></div>
-  </div>
-
-  <div class="rule">每位顾客仅可抽奖一次 &nbsp;|&nbsp; 每周日早 <span>06:00</span> 自动重置</div>
-</div>
-
-<button class="print-btn" onclick="window.print()">🖨️ 打印二维码</button>
-
-<script>
-// ★★★ 重要：在此填入你的部署地址（二维码将指向此地址）★★★
-// 示例：var LOTTERY_DOMAIN = '527687644.github.io';
-var LOTTERY_DOMAIN = '';
-
-// 自动取当前域名，生成指向 index.html 的链接
-var lotteryUrl = LOTTERY_DOMAIN
-  ? 'https://' + LOTTERY_DOMAIN + '/index.html'
-  : location.href.replace(/qrcode\.html.*$/, 'index.html');
-
-document.getElementById('urlBox').textContent = lotteryUrl;
-
-new QRCode(document.getElementById('qr-wrap'), {
-  text: lotteryUrl,
-  width: 220,
-  height: 220,
-  colorDark: '#1a0800',
-  colorLight: '#ffffff',
-  correctLevel: QRCode.CorrectLevel.H
-});
-
-// 自动隐藏URL显示框（如果用的是相对路径则不显示）
-if (!LOTTERY_DOMAIN) {
-  document.getElementById('urlBox').textContent = '请先在下方填入部署地址，或直接使用相对路径';
-}
-</script>
-</body>
-</html>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       background: #1a0a00;
-      font-family: 'PingFang SC','Microsoft YaHei',sans-serif;
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -133,17 +42,6 @@ if (!LOTTERY_DOMAIN) {
       border-radius: 16px;
       padding: 14px;
       display: inline-block;
-      margin-bottom: 16px;
-    }
-
-    .url-box {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,140,0,0.3);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 11px;
-      color: #ffb347;
-      word-break: break-all;
       margin-bottom: 16px;
     }
 
@@ -187,7 +85,6 @@ if (!LOTTERY_DOMAIN) {
       .card { border-color: #ccc; box-shadow: none; background: #fff; color: #000; }
       h1 { color: #000; text-shadow: none; }
       .sub { color: #555; }
-      .url-box { color: #333; border-color: #ccc; }
       .p-item { background: #f5f5f5; }
       .rule { color: #444; }
       .p1 .lv,.p2 .lv,.p3 .lv,.p4 .lv { color: #333; }
@@ -204,8 +101,6 @@ if (!LOTTERY_DOMAIN) {
 
   <div id="qr-wrap"></div>
 
-  <div class="url-box" id="urlBox">加载中...</div>
-
   <div class="prizes">
     <div class="p-item p1"><div class="lv">🥇 一等奖</div><div class="nm">玉米 10 串 × 1份</div></div>
     <div class="p-item p2"><div class="lv">🥈 二等奖</div><div class="nm">玉米 5 串 × 5份</div></div>
@@ -213,15 +108,14 @@ if (!LOTTERY_DOMAIN) {
     <div class="p-item p4"><div class="lv">🎖️ 四等奖</div><div class="nm">韭菜/土豆 2串×2份</div></div>
   </div>
 
-    <div class="rule">每位顾客仅可抽奖一次 &nbsp;|&nbsp; 每周日早 <span>06:00</span> 自动重置</div>
+  <div class="rule">每位顾客仅可抽奖一次 &nbsp;|&nbsp; 每周一早 <span>06:00</span> 自动重置</div>
 </div>
 
 <button class="print-btn" onclick="window.print()">🖨️ 打印二维码</button>
 
 <script>
   // 自动读取当前页面同目录的 index.html 地址
-  const base = location.href.replace(/qrcode\.html.*$/, 'index.html');
-  document.getElementById('urlBox').textContent = base;
+  var base = location.href.replace(/qrcode\.html.*$/, 'index.html');
 
   new QRCode(document.getElementById('qr-wrap'), {
     text: base,
@@ -232,5 +126,6 @@ if (!LOTTERY_DOMAIN) {
     correctLevel: QRCode.CorrectLevel.H
   });
 </script>
+
 </body>
 </html>
