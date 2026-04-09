@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🔥 烧烤摊幸运抽奖</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #1a0a00 0%, #3d1a00 40%, #1a0a00 100%);
+      font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 火焰粒子背景 */
+    .fire-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ember {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #ff6a00;
+      animation: floatUp linear infinite;
+      opacity: 0;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh) scale(1); opacity: 0.8; }
+      80%  { opacity: 0.4; }
+      100% { transform: translateY(-10vh) scale(0.3) rotate(360deg); opacity: 0; }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      padding: 0 16px 32px;
+    }
+
+    /* 顶部标题 */
+    .header {
+      text-align: center;
+      padding: 32px 0 20px;
+    }
+    .header .flame-icon {
+      font-size: 52px;
+      display: block;
+      animation: flamePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes flamePulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.12); }
+    }
+    .header h1 {
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 20px #ff6a00, 0 0 40px #ff4500;
+      letter-spacing: 2px;
+      margin-top: 8px;
+    }
+    .header .subtitle {
+      font-size: 13px;
+      color: #ffb347;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* 周期信息 */
+    .week-info {
+      background: rgba(255,106,0,0.15);
+      border: 1px solid rgba(255,106,0,0.4);
+      border-radius: 12px;
+      padding: 10px 16px;
+      text-align: center;
+      margin-bottom: 16px;
+      color: #ffb347;
+      font-size: 13px;
+    }
+    .week-info span { color: #fff; font-weight: 700; }
+
+    /* 奖品展示 */
+    .prizes-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,106,0,0.3);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .prizes-card h3 {
+      color: #ff8c00;
+      font-size: 15px;
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .prize-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .prize-item:last-child { margin-bottom: 0; }
+    .prize-1 { background: linear-gradient(90deg,rgba(255,215,0,0.2),rgba(255,215,0,0.05)); border-left: 3px solid #ffd700; }
+    .prize-2 { background: linear-gradient(90deg,rgba(192,192,192,0.2),rgba(192,192,192,0.05)); border-left: 3px solid #c0c0c0; }
+    .prize-3 { background: linear-gradient(90deg,rgba(205,127,50,0.2),rgba(205,127,50,0.05)); border-left: 3px solid #cd7f32; }
+    .prize-4 { background: linear-gradient(90deg,rgba(100,200,100,0.2),rgba(100,200,100,0.05)); border-left: 3px solid #66cc66; }
+    .prize-label { color: #fff; font-weight: 700; }
+    .prize-name { color: #ffcc88; flex: 1; margin: 0 10px; }
+    .prize-remain { font-size: 12px; color: #aaa; }
+    .prize-remain.zero { color: #ff4444; }
+
+    /* 抽奖按钮区 */
+    .lottery-area {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    /* 大转盘效果容器 */
+    .drum-wrap {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 20px;
+      position: relative;
+    }
+    .drum-ring {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: conic-gradient(
+        #ffd700 0deg 90deg,
+        #c0c0c0 90deg 180deg,
+        #cd7f32 180deg 270deg,
+        #66cc66 270deg 360deg
+      );
+      position: absolute;
+      animation: none;
+      box-shadow: 0 0 30px rgba(255,140,0,0.5);
+    }
+    .drum-ring.spinning {
+      animation: spinDrum 0.1s linear infinite;
+    }
+    @keyframes spinDrum {
+      to { transform: rotate(360deg); }
+    }
+    .drum-center {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #2d1200, #1a0800);
+      position: absolute;
+      top: 35px;
+      left: 35px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(255,140,0,0.4);
+    }
+    .drum-center .drum-emoji {
+      font-size: 32px;
+      animation: grillSway 2s ease-in-out infinite;
+    }
+    @keyframes grillSway {
+      0%,100% { transform: rotate(-5deg); }
+      50%      { transform: rotate(5deg); }
+    }
+    .drum-center .drum-text {
+      font-size: 11px;
+      color: #ffb347;
+      margin-top: 4px;
+    }
+
+    .btn-lottery {
+      width: 100%;
+      padding: 16px;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(135deg, #ff6a00, #ee0979, #ff6a00);
+      background-size: 200% 100%;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(238,9,121,0.5);
+      animation: btnGlow 2s ease-in-out infinite;
+    }
+    @keyframes btnGlow {
+      0%,100% { background-position: 0% 50%; box-shadow: 0 4px 20px rgba(255,106,0,0.6); }
+      50%      { background-position: 100% 50%; box-shadow: 0 4px 30px rgba(238,9,121,0.8); }
+    }
+    .btn-lottery:active { transform: scale(0.96); }
+    .btn-lottery:disabled {
+      background: #555;
+      animation: none;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-lottery .btn-shine {
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 40%;
+      height: 200%;
+      background: rgba(255,255,255,0.25);
+      transform: skewX(-20deg);
+      animation: btnShine 3s ease-in-out infinite;
+    }
+    @keyframes btnShine {
+      0%,100% { left: -60%; }
+      50%      { left: 120%; }
+    }
+
+    /* 规则说明 */
+    .rules-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+    .rules-card h4 { color: #ffb347; font-size: 13px; margin-bottom: 8px; }
+    .rules-card ul { list-style: none; }
+    .rules-card ul li {
+      font-size: 12px;
+      color: #bbb;
+      padding: 3px 0;
+      padding-left: 16px;
+      position: relative;
+    }
+    .rules-card ul li::before {
+      content: '🔥';
+      position: absolute;
+      left: 0;
+      font-size: 10px;
+    }
+
+    /* 中奖结果弹窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      width: 88%;
+      max-width: 340px;
+      border-radius: 24px;
+      padding: 32px 24px 24px;
+      text-align: center;
+      position: relative;
+      transform: scale(0.7) translateY(30px);
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      background: linear-gradient(160deg, #2d1200, #1a0800);
+      border: 2px solid rgba(255,140,0,0.5);
+      box-shadow: 0 0 60px rgba(255,106,0,0.4);
+    }
+    .modal-overlay.show .modal {
+      transform: scale(1) translateY(0);
+    }
+    .modal .result-icon { font-size: 64px; display: block; margin-bottom: 8px; }
+    .modal .result-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #ffd700;
+      text-shadow: 0 0 15px #ff8c00;
+      margin-bottom: 6px;
+    }
+    .modal .result-prize {
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      margin: 12px 0;
+      line-height: 1.3;
+    }
+    .modal .result-desc {
+      font-size: 13px;
+      color: #ffb347;
+      margin-bottom: 20px;
+    }
+    .modal .confetti-area {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 24px;
+    }
+    .conf-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(300px) rotate(720deg); opacity: 0; }
+    }
+    .modal .btn-close {
+      width: 100%;
+      padding: 13px;
+      border-radius: 50px;
+      border: none;
+      background: linear-gradient(135deg, #ff6a00, #ee0979);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 谢谢参与弹窗 */
+    .modal.no-win .result-title { color: #aaa; text-shadow: none; }
+    .modal.no-win .result-icon { filter: grayscale(0.5); }
+
+    /* 中奖记录 */
+    .history-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .history-card h4 { color: #ffb347; font-size: 13px; margin-bottom: 8px; }
+    .history-list { list-style: none; }
+    .history-list li {
+      font-size: 12px;
+      color: #ccc;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: space-between;
+    }
+    .history-list li:last-child { border-bottom: none; }
+    .history-empty { color: #666; font-size: 12px; text-align: center; padding: 8px 0; }
+  </style>
+</head>
+<body>
+
+<!-- 火焰粒子背景 -->
+<div class="fire-bg" id="fireBg"></div>
+
+<div class="container">
+  <!-- 标题 -->
+  <div class="header">
+    <span class="flame-icon">🔥</span>
+    <h1>烧烤摊幸运抽奖</h1>
+    <div class="subtitle">扫码参与 · 免费抽好礼</div>
+  </div>
+
+  <!-- 本周信息 -->
+  <div class="week-info">
+    本周已中奖：<span id="winCount">0</span> / <span>10</span> 人 &nbsp;|&nbsp; 剩余名额：<span id="remainSlots">10</span> 人
+    <br><small style="color:#888;margin-top:4px;display:block;" id="resetTime"></small>
+  </div>
+
+  <!-- 奖品展示 -->
+  <div class="prizes-card">
+    <h3>🏆 本周奖品一览</h3>
+    <div class="prize-item prize-1">
+      <span class="prize-label">🥇 一等奖</span>
+      <span class="prize-name">玉米 10 串</span>
+      <span class="prize-remain" id="remain-1">剩余 1 份</span>
+    </div>
+    <div class="prize-item prize-2">
+      <span class="prize-label">🥈 二等奖</span>
+      <span class="prize-name">玉米 5 串</span>
+      <span class="prize-remain" id="remain-2">剩余 5 份</span>
+    </div>
+    <div class="prize-item prize-3">
+      <span class="prize-label">🥉 三等奖</span>
+      <span class="prize-name">小肉串 2 串</span>
+      <span class="prize-remain" id="remain-3">剩余 2 份</span>
+    </div>
+    <div class="prize-item prize-4">
+      <span class="prize-label">🎖️ 四等奖</span>
+      <span class="prize-name">韭菜/土豆任选 2 串</span>
+      <span class="prize-remain" id="remain-4">剩余 2 份</span>
+    </div>
+  </div>
+
+  <!-- 抽奖区 -->
+  <div class="lottery-area">
+    <div class="drum-wrap">
+      <div class="drum-ring" id="drumRing"></div>
+      <div class="drum-center">
+        <span class="drum-emoji">🍖</span>
+        <span class="drum-text">好运来了</span>
+      </div>
+    </div>
+    <button class="btn-lottery" id="btnLottery" onclick="doLottery()">
+      <span class="btn-shine"></span>
+      立即抽奖
+    </button>
+  </div>
+
+  <!-- 活动规则 -->
+  <div class="rules-card">
+    <h4>📋 活动规则</h4>
+    <ul>
+      <li>每周中奖人数上限为 10 人</li>
+      <li>所有奖品及中奖名额每周自动重置</li>
+      <li>中奖后请向摊主出示此页面兑换</li>
+      <li>奖品兑换以当场核实为准</li>
+    </ul>
+  </div>
+
+  <!-- 中奖记录 -->
+  <div class="history-card" style="margin-top:16px;">
+    <h4>📜 本周中奖记录</h4>
+    <ul class="history-list" id="historyList">
+      <li><div class="history-empty">暂无中奖记录</div></li>
+    </ul>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="resultModal">
+    <div class="confetti-area" id="confettiArea"></div>
+    <span class="result-icon" id="resultIcon">🎉</span>
+    <div class="result-title" id="resultTitle">恭喜中奖！</div>
+    <div class="result-prize" id="resultPrize"></div>
+    <div class="result-desc" id="resultDesc">请向摊主出示此页面兑换奖品</div>
+    <button class="btn-close" onclick="closeModal()">好的，去兑换 🎁</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 数据定义
+// ============================================================
+const PRIZES = [
+  { id: 1, level: '一等奖', icon: '🥇', name: '玉米 10 串', total: 1, prob: 0.05 },
+  { id: 2, level: '二等奖', icon: '🥈', name: '玉米 5 串',  total: 5, prob: 0.15 },
+  { id: 3, level: '三等奖', icon: '🥉', name: '小肉串 2 串', total: 2, prob: 0.20 },
+  { id: 4, level: '四等奖', icon: '🎖️', name: '韭菜/土豆任选 2 串', total: 2, prob: 0.20 },
+];
+const MAX_WINNERS = 10;
+const STORAGE_KEY = 'bbq_lottery_v1';
+
+// ============================================================
+// 工具：获取本周周一 0 点的时间戳（作为周期标识）
+// ============================================================
+function getWeekStart() {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 1=Mon...
+  const diff = (day === 0 ? -6 : 1 - day); // 距本周一的天数差
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.getTime();
+}
+
+function getNextMonday() {
+  const weekStart = getWeekStart();
+  return weekStart + 7 * 24 * 3600 * 1000;
+}
+
+// ============================================================
+// 状态读写
+// ============================================================
+function loadState() {
+  const weekStart = getWeekStart();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      if (data.weekStart === weekStart) return data;
+    }
+  } catch(e) {}
+  // 初始化本周状态
+  return {
+    weekStart,
+    winCount: 0,
+    remains: { 1: 1, 2: 5, 3: 2, 4: 2 },
+    history: []
+  };
+}
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ============================================================
+// UI 更新
+// ============================================================
+function renderUI(state) {
+  document.getElementById('winCount').textContent = state.winCount;
+  document.getElementById('remainSlots').textContent = Math.max(0, MAX_WINNERS - state.winCount);
+
+  // 奖品剩余
+  PRIZES.forEach(p => {
+    const el = document.getElementById('remain-' + p.id);
+    const r = state.remains[p.id];
+    el.textContent = r > 0 ? `剩余 ${r} 份` : '已抢光';
+    el.className = 'prize-remain' + (r <= 0 ? ' zero' : '');
+  });
+
+  // 下次重置时间
+  const next = new Date(getNextMonday());
+  const fmt = `${next.getMonth()+1}月${next.getDate()}日 00:00 自动重置`;
+  document.getElementById('resetTime').textContent = fmt;
+
+  // 历史记录
+  const list = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    list.innerHTML = '<li><div class="history-empty">暂无中奖记录</div></li>';
+  } else {
+    list.innerHTML = state.history.slice().reverse().map(h =>
+      `<li><span>${h.time}</span><span style="color:#ffd700">${h.level} · ${h.name}</span></li>`
+    ).join('');
+  }
+
+  // 按钮状态
+  const btn = document.getElementById('btnLottery');
+  const full = state.winCount >= MAX_WINNERS;
+  const allGone = PRIZES.every(p => state.remains[p.id] <= 0);
+  if (full || allGone) {
+    btn.disabled = true;
+    btn.textContent = full ? '本周名额已满' : '奖品已抢光';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-shine"></span>立即抽奖';
+  }
+}
+
+// ============================================================
+// 抽奖算法
+// ============================================================
+function drawPrize(state) {
+  // 过滤出还有余量的奖品
+  const available = PRIZES.filter(p => state.remains[p.id] > 0);
+  if (available.length === 0) return null;
+
+  // 调整概率后归一化（无奖品时自然降低获奖率）
+  const totalAwardProb = available.reduce((s, p) => s + p.prob, 0);
+  // 未中奖概率
+  const noWinProb = 1 - totalAwardProb; // 可以 < 0 时截断
+
+  const rand = Math.random();
+  let cum = 0;
+
+  for (const p of available) {
+    cum += p.prob;
+    if (rand < cum) return p;
+  }
+  return null; // 未中奖
+}
+
+// ============================================================
+// 抽奖主流程
+// ============================================================
+let isSpinning = false;
+
+function doLottery() {
+  if (isSpinning) return;
+  const state = loadState();
+  if (state.winCount >= MAX_WINNERS) return;
+
+  isSpinning = true;
+  const btn = document.getElementById('btnLottery');
+  btn.disabled = true;
+  btn.textContent = '抽奖中...';
+
+  // 转盘旋转动画
+  const ring = document.getElementById('drumRing');
+  ring.classList.add('spinning');
+
+  setTimeout(() => {
+    ring.classList.remove('spinning');
+    isSpinning = false;
+
+    const prize = drawPrize(state);
+
+    if (prize) {
+      // 中奖
+      state.winCount++;
+      state.remains[prize.id]--;
+      const now = new Date();
+      const timeStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      state.history.push({ time: timeStr, level: prize.level, name: prize.name });
+      saveState(state);
+      renderUI(state);
+      showWinModal(prize);
+    } else {
+      // 未中奖
+      saveState(state);
+      renderUI(state);
+      showNoWinModal();
+    }
+  }, 1800);
+}
+
+// ============================================================
+// 弹窗
+// ============================================================
+function showWinModal(prize) {
+  const modal = document.getElementById('resultModal');
+  modal.className = 'modal';
+  document.getElementById('resultIcon').textContent = prize.icon;
+  document.getElementById('resultTitle').textContent = '🎉 恭喜中奖！';
+  document.getElementById('resultPrize').textContent = prize.level + '\n' + prize.name;
+  document.getElementById('resultDesc').textContent = '请向摊主出示此页面兑换奖品 😊';
+  document.getElementById('resultDesc').style.color = '#ffb347';
+  document.querySelector('.btn-close').textContent = '好的，去兑换 🎁';
+
+  spawnConfetti();
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function showNoWinModal() {
+  const modal = document.getElementById('resultModal');
+  modal.className = 'modal no-win';
+  document.getElementById('resultIcon').textContent = '😢';
+  document.getElementById('resultTitle').textContent = '很遗憾，未中奖';
+  document.getElementById('resultPrize').textContent = '下次好运！';
+  document.getElementById('resultDesc').textContent = '每次抽奖均有机会哦，继续加油！';
+  document.getElementById('resultDesc').style.color = '#888';
+  document.getElementById('confettiArea').innerHTML = '';
+  document.querySelector('.btn-close').textContent = '再接再厉 💪';
+
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+// ============================================================
+// 彩带
+// ============================================================
+function spawnConfetti() {
+  const area = document.getElementById('confettiArea');
+  area.innerHTML = '';
+  const colors = ['#ffd700','#ff6a00','#ee0979','#00e5ff','#76ff03','#fff'];
+  for (let i = 0; i < 30; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'conf-dot';
+    dot.style.cssText = `
+      left: ${Math.random()*100}%;
+      top: ${Math.random()*20 - 10}%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      animation-duration: ${0.8 + Math.random()*1.2}s;
+      animation-delay: ${Math.random()*0.5}s;
+      width: ${4 + Math.random()*6}px;
+      height: ${4 + Math.random()*6}px;
+    `;
+    area.appendChild(dot);
+  }
+}
+
+// ============================================================
+// 火焰粒子背景
+// ============================================================
+(function createEmbers() {
+  const bg = document.getElementById('fireBg');
+  for (let i = 0; i < 20; i++) {
+    const e = document.createElement('div');
+    e.className = 'ember';
+    const hue = 10 + Math.random() * 40;
+    e.style.cssText = `
+      left: ${Math.random()*100}%;
+      bottom: 0;
+      background: hsl(${hue},100%,60%);
+      animation-duration: ${3 + Math.random()*5}s;
+      animation-delay: ${Math.random()*6}s;
+      width: ${2 + Math.random()*4}px;
+      height: ${2 + Math.random()*4}px;
+    `;
+    bg.appendChild(e);
+  }
+})();
+
+// ============================================================
+// 初始化
+// ============================================================
+renderUI(loadState());
+</script>
+</body>
+</html>
